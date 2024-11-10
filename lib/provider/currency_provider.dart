@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:monedas_api_project/models/historial_rate.dart';
 import 'package:monedas_api_project/services/currency_services.dart';
 
 class CurrencyProvider with ChangeNotifier {
@@ -51,5 +52,33 @@ class CurrencyProvider with ChangeNotifier {
 
   Future<double> convert(double amount, String from, String to) async {
     return _service.convertCurrency(amount, from, to, _rates);
+  }
+
+  List<HistoricalRate> _historicalRates = [];
+  bool _isLoadingHistorical = false;
+  
+  List<HistoricalRate> get historicalRates => _historicalRates;
+  bool get isLoadingHistorical => _isLoadingHistorical;
+
+  Future<void> loadHistoricalRates(
+    String baseCurrency,
+    String targetCurrency,
+  ) async {
+    _isLoadingHistorical = true;
+    _error = '';
+    notifyListeners();
+
+    try {
+      _historicalRates = await _service.getHistoricalRates(
+        baseCurrency,
+        targetCurrency,
+      );
+    } catch (e) {
+      _error = e.toString();
+      print('Error loading historical rates: $e');
+    }
+
+    _isLoadingHistorical = false;
+    notifyListeners();
   }
 }

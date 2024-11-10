@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:monedas_api_project/provider/currency_provider.dart';
+import 'package:monedas_api_project/screens/historical_screen.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -81,21 +82,41 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 SizedBox(height: 20),
-                ElevatedButton(
-                  onPressed: () async {
-                    if (_amountController.text.isNotEmpty) {
-                      final amount = double.parse(_amountController.text);
-                      final result = await provider.convert(
-                        amount,
-                        _fromCurrency,
-                        _toCurrency,
-                      );
-                      setState(() {
-                        _result = result;
-                      });
-                    }
-                  },
-                  child: Text('Convertir'),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: [
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (_amountController.text.isNotEmpty) {
+                          final amount = double.parse(_amountController.text);
+                          final result = await provider.convert(
+                            amount,
+                            _fromCurrency,
+                            _toCurrency,
+                          );
+                          setState(() {
+                            _result = result;
+                          });
+                        }
+                      },
+                      child: Text('Convertir'),
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => HistoricalRatesScreen(
+                              baseCurrency: _fromCurrency,
+                              targetCurrency: _toCurrency,
+                            ),
+                          ),
+                        );
+                      },
+                      icon: Icon(Icons.history),
+                      label: Text('Ver Histórico'),
+                    ),
+                  ],
                 ),
                 SizedBox(height: 20),
                 Text(
