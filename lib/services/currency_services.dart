@@ -61,46 +61,47 @@ class CurrencyService {
   }
 
   Future<List<HistoricalRate>> getHistoricalRates(
-    String baseCurrency,
-    String targetCurrency,
-  ) async {
-    final List<HistoricalRate> rates = [];
-    
-    // Obtener fecha actual y restar 30 días
-    final endDate = DateTime.now();
-    final startDate = endDate.subtract(Duration(days: 30));
-    
-    // Formato requerido por la API: YYYY-MM-DD
-    String formatDate(DateTime date) {
-      return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
-    }
+  String baseCurrency,
+  List<String> targetCurrencies,
+  DateTime selectedDate,
+) async {
+  final List<HistoricalRate> rates = [];
+  
+  String formatDate(DateTime date) {
+    return "${date.year}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}";
+  }
 
-    final dateStr = formatDate(startDate);
-    
-    final response = await http.get(
-      Uri.parse(
-        '$baseUrl/historical?base_currency=$baseCurrency&currencies=$targetCurrency&date=$dateStr',
-      ),
-      headers: {
-        'apikey': apiKey,
-      },
-    );
+  final dateStr = formatDate(selectedDate);
+  final currenciesStr = targetCurrencies.join(',');
+  
+  final response = await http.get(
+    Uri.parse(
+      '$baseUrl/historical?base_currency=$baseCurrency&currencies=$currenciesStr&date=$dateStr'
+    ),
+    headers: {
+      'apikey': apiKey,
+    },
+  );
 
-    if (response.statusCode == 200) {
-      final data = json.decode(response.body);
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    
+    if (data['data'] != null) {
       final rateData = data['data'] as Map<String, dynamic>;
-      
-      rateData.forEach((dateStr, value) {
-        if (value is Map<String, dynamic> && value.containsKey(targetCurrency)) {
-          final rate = value[targetCurrency]['value'].toDouble();
-          final date = DateTime.parse(dateStr);
-          rates.add(HistoricalRate(date: date, rate: rate));
+      targetCurrencies.forEach((currency) {
+        if (rateData[currency] != null) {
+          final rate = rateData[currency]['value'].toDouble();
+          rates.add(HistoricalRate(
+            date: selectedDate,
+            rate: rate,
+            currency: currency,
+          ));
         }
       });
-
-      return rates;
-    } else {
-      throw Exception('Failed to load historical rates: ${response.body}');
     }
+    return rates;
+  } else {
+    throw Exception('Failed to load historical rates: ${response.body}');
   }
+}
 }

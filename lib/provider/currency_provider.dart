@@ -61,24 +61,28 @@ class CurrencyProvider with ChangeNotifier {
   bool get isLoadingHistorical => _isLoadingHistorical;
 
   Future<void> loadHistoricalRates(
-    String baseCurrency,
-    String targetCurrency,
-  ) async {
-    _isLoadingHistorical = true;
-    _error = '';
-    notifyListeners();
+  String baseCurrency,
+  List<String> targetCurrencies,
+  {DateTime? date}
+) async {
+  _isLoadingHistorical = true;
+  _error = '';
+  notifyListeners();
 
-    try {
-      _historicalRates = await _service.getHistoricalRates(
-        baseCurrency,
-        targetCurrency,
-      );
-    } catch (e) {
-      _error = e.toString();
-      print('Error loading historical rates: $e');
-    }
-
-    _isLoadingHistorical = false;
-    notifyListeners();
+  try {
+    final selectedDate = date ?? DateTime.now().subtract(Duration(days: 1));
+    _historicalRates = await _service.getHistoricalRates(
+      baseCurrency,
+      targetCurrencies,
+      selectedDate,
+    );
+  } catch (e) {
+    _error = e.toString();
+    print('Error loading historical rates: $e');
   }
+
+  _isLoadingHistorical = false;
+  notifyListeners();
+}
+
 }
