@@ -29,71 +29,79 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           'Conversor de Monedas',
-          style: TextStyle(fontWeight: FontWeight.w600),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.5,
+          ),
         ),
-        elevation: 0,
         centerTitle: true,
       ),
       body: Consumer<CurrencyProvider>(
         builder: (context, provider, child) {
-          return SafeArea(
-            child: Container(
-              height: MediaQuery.of(context).size.height,
-              width: MediaQuery.of(context).size.width,
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    Theme.of(context).colorScheme.surface,
-                    Theme.of(context).scaffoldBackgroundColor,
-                  ],
-                ),
+          return Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [
+                  Theme.of(context).colorScheme.surface,
+                  Theme.of(context).scaffoldBackgroundColor,
+                ],
+                stops: [0.0, 0.8],
               ),
+            ),
+            child: SafeArea(
               child: SingleChildScrollView(
+                physics: BouncingScrollPhysics(),
                 child: Padding(
-                  padding: const EdgeInsets.all(16.0),
+                  padding: EdgeInsets.fromLTRB(16, 24, 16, 32),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16.0),
-                        child: Text(
-                          'Conversión rápida',
-                          style: Theme.of(context).textTheme.titleLarge,
+                      Text(
+                        'Conversión rápida',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          letterSpacing: 0.5,
+                          height: 1.2,
                         ),
                       ),
-                      
-                      Card(
-                        elevation: 4,
-                        color: Theme.of(context).cardColor,
-                        shadowColor: Colors.black38,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(20),
+                      SizedBox(height: 8),
+                      Text(
+                        'Convierte entre más de 30 monedas en tiempo real',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          letterSpacing: 0.25,
                         ),
-                        child: Container(
-                          padding: const EdgeInsets.all(20.0),
+                      ),
+                      SizedBox(height: 24),
+                      
+                      // Card principal de conversión
+                      Card(
+                        child: Padding(
+                          padding: EdgeInsets.all(24),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               TextField(
                                 controller: _amountController,
-                                keyboardType: TextInputType.number,
-                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                  fontSize: 20,
+                                keyboardType: TextInputType.numberWithOptions(decimal: true),
+                                style: TextStyle(
+                                  fontSize: 22,
+                                  letterSpacing: 0.5,
                                 ),
                                 decoration: InputDecoration(
                                   labelText: 'Cantidad a convertir',
                                   prefixIcon: Icon(
                                     Icons.attach_money,
-                                    color: Theme.of(context).colorScheme.primary,
+                                    size: 28,
                                   ),
+                                  helperText: 'Ingresa el monto a convertir',
                                 ),
                               ),
-                              SizedBox(height: 24),
+                              SizedBox(height: 32),
 
                               Row(
                                 children: [
@@ -113,21 +121,8 @@ class _HomeScreenState extends State<HomeScreen> {
                                     ),
                                   ),
                                   Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 12),
-                                    child: IconButton(
-                                      icon: Icon(
-                                        Icons.sync,
-                                        size: 32,
-                                        color: Theme.of(context).colorScheme.primary,
-                                      ),
-                                      tooltip: 'Cargar tasas de cambio',
-                                      onPressed: _fromCurrency == null ? null : () async {
-                                        await provider.loadRates(_fromCurrency!);
-                                        setState(() {
-                                          _hasLoadedRates = true;
-                                        });
-                                      },
-                                    ),
+                                    padding: EdgeInsets.symmetric(horizontal: 16),
+                                    child: _buildSyncButton(provider),
                                   ),
                                   Expanded(
                                     child: _buildCurrencySelector(
@@ -148,82 +143,27 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-                      SizedBox(height: 24),
+                      
+                      if (_hasConverted) ...[
+                        SizedBox(height: 24),
+                        _buildResultCard(),
+                      ],
 
-                      if (_hasConverted)
-                        Card(
-                          elevation: 4,
-                          color: Theme.of(context).cardColor,
-                          shadowColor: Colors.black38,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: Container(
-                            padding: EdgeInsets.all(20),
-                            width: double.infinity,
-                            child: Column(
-                              children: [
-                                Text(
-                                  'Resultado de la conversión',
-                                  style: Theme.of(context).textTheme.titleMedium,
-                                ),
-                                SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                                  textBaseline: TextBaseline.alphabetic,
-                                  children: [
-                                    Text(
-                                      '${_amountController.text} $_fromCurrency = ',
-                                      style: Theme.of(context).textTheme.bodyLarge,
-                                    ),
-                                    Text(
-                                      '${_result.toStringAsFixed(4)}',
-                                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                        fontSize: 28,
-                                        color: Theme.of(context).colorScheme.primary,
-                                      ),
-                                    ),
-                                    Text(
-                                      ' $_toCurrency',
-                                      style: Theme.of(context).textTheme.bodyLarge,
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      SizedBox(height: 24),
-
+                      SizedBox(height: 32),
+                      
+                      // Botones de acción
                       _buildMainButton(
                         onPressed: (_fromCurrency != null && 
                                   _toCurrency != null && 
                                   _amountController.text.isNotEmpty)
-                            ? () async {
-                                if (!_hasLoadedRates) {
-                                  await provider.loadRates(_fromCurrency!);
-                                  setState(() {
-                                    _hasLoadedRates = true;
-                                  });
-                                }
-                                
-                                final amount = double.parse(_amountController.text);
-                                final result = await provider.convert(
-                                  amount,
-                                  _fromCurrency!,
-                                  _toCurrency!,
-                                );
-                                setState(() {
-                                  _result = result;
-                                  _hasConverted = true;
-                                });
-                              }
+                            ? () => _handleConversion(provider)
                             : null,
                         label: 'Convertir',
                         icon: Icons.currency_exchange,
                       ),
+                      
                       SizedBox(height: 16),
+                      
                       Row(
                         children: [
                           Expanded(
@@ -231,17 +171,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               icon: Icons.history,
                               label: 'Histórico',
                               onPressed: (_fromCurrency != null && _toCurrency != null)
-                                  ? () {
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) => HistoricalRatesScreen(
-                                            baseCurrency: _fromCurrency!,
-                                            targetCurrency: _toCurrency!,
-                                          ),
-                                        ),
-                                      );
-                                    }
+                                  ? () => _navigateToHistorical()
                                   : null,
                             ),
                           ),
@@ -250,14 +180,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: _buildSecondaryButton(
                               icon: Icons.info_outline,
                               label: 'Detalles',
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => CurrencyDetailsScreen(),
-                                  ),
-                                );
-                              },
+                              onPressed: () => _navigateToDetails(),
                             ),
                           ),
                         ],
@@ -273,6 +196,85 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  Widget _buildSyncButton(CurrencyProvider provider) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: IconButton(
+        icon: Icon(
+          Icons.sync,
+          size: 28,
+          color: Theme.of(context).colorScheme.primary,
+        ),
+        tooltip: 'Actualizar tasas',
+        onPressed: _fromCurrency == null ? null : () async {
+          await provider.loadRates(_fromCurrency!);
+          setState(() {
+            _hasLoadedRates = true;
+          });
+        },
+      ),
+    );
+  }
+
+  Widget _buildResultCard() {
+    return Card(
+      child: Container(
+        padding: EdgeInsets.symmetric(vertical: 24, horizontal: 20),
+        width: double.infinity,
+        child: Column(
+          children: [
+            Text(
+              'Resultado de la conversión',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                letterSpacing: 0.5,
+              ),
+            ),
+            SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '${_amountController.text} $_fromCurrency = ',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Text(
+                  '${_result.toStringAsFixed(4)}',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.secondary,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                Text(
+                  ' $_toCurrency',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              'Última actualización: ${DateTime.now().toString().substring(11, 16)}',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                fontSize: 12,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildCurrencySelector(
     String label,
     String? value,
@@ -280,11 +282,13 @@ class _HomeScreenState extends State<HomeScreen> {
     Function(String?) onChanged,
   ) {
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
-        border: Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.5)),
+        color: Theme.of(context).colorScheme.surface.withOpacity(0.5),
         borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -292,23 +296,26 @@ class _HomeScreenState extends State<HomeScreen> {
           Text(
             label,
             style: TextStyle(
-              fontSize: 14,
-              color: Theme.of(context).colorScheme.primary,
+              fontSize: 12,
+              color: Theme.of(context).colorScheme.secondary,
               fontWeight: FontWeight.w500,
+              letterSpacing: 0.5,
             ),
           ),
           DropdownButton<String>(
             value: value,
             hint: Text(
               'Seleccionar',
-              style: TextStyle(color: Colors.white70),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+              ),
             ),
             isExpanded: true,
             underline: SizedBox(),
-            dropdownColor: Theme.of(context).colorScheme.surface,
+            dropdownColor: Theme.of(context).cardColor,
             icon: Icon(
               Icons.keyboard_arrow_down,
-              color: Theme.of(context).colorScheme.primary,
+              color: Theme.of(context).colorScheme.secondary,
             ),
             items: items.map((String currency) {
               return DropdownMenuItem<String>(
@@ -317,7 +324,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   currency,
                   style: TextStyle(
                     fontSize: 16,
-                    color: Colors.white,
+                    letterSpacing: 0.5,
                   ),
                 ),
               );
@@ -334,16 +341,20 @@ class _HomeScreenState extends State<HomeScreen> {
     required String label,
     required IconData icon,
   }) {
-    return ElevatedButton.icon(
-      onPressed: onPressed,
-      icon: Icon(icon),
-      label: Text(
-        label,
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-      ),
-      style: ElevatedButton.styleFrom(
-        disabledBackgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-        disabledForegroundColor: Colors.white60,
+    return SizedBox(
+      width: double.infinity,
+      height: 56,
+      child: ElevatedButton.icon(
+        onPressed: onPressed,
+        icon: Icon(icon, size: 24),
+        label: Text(
+          label,
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 1,
+          ),
+        ),
       ),
     );
   }
@@ -355,10 +366,54 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return OutlinedButton.icon(
       onPressed: onPressed,
-      icon: Icon(icon),
+      icon: Icon(icon, size: 20),
       label: Text(
         label,
-        style: TextStyle(fontWeight: FontWeight.w600),
+        style: TextStyle(
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.5,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleConversion(CurrencyProvider provider) async {
+    if (!_hasLoadedRates) {
+      await provider.loadRates(_fromCurrency!);
+      setState(() {
+        _hasLoadedRates = true;
+      });
+    }
+    
+    final amount = double.parse(_amountController.text);
+    final result = await provider.convert(
+      amount,
+      _fromCurrency!,
+      _toCurrency!,
+    );
+    setState(() {
+      _result = result;
+      _hasConverted = true;
+    });
+  }
+
+  void _navigateToHistorical() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => HistoricalRatesScreen(
+          baseCurrency: _fromCurrency!,
+          targetCurrency: _toCurrency!,
+        ),
+      ),
+    );
+  }
+
+  void _navigateToDetails() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CurrencyDetailsScreen(),
       ),
     );
   }
