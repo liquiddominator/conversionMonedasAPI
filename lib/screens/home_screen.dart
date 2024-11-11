@@ -165,26 +165,24 @@ class _HomeScreenState extends State<HomeScreen> {
                       SizedBox(height: 16),
                       
                       Row(
-                        children: [
-                          Expanded(
-                            child: _buildSecondaryButton(
-                              icon: Icons.history,
-                              label: 'Histórico',
-                              onPressed: (_fromCurrency != null && _toCurrency != null)
-                                  ? () => _navigateToHistorical()
-                                  : null,
-                            ),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: _buildSecondaryButton(
-                              icon: Icons.info_outline,
-                              label: 'Detalles',
-                              onPressed: () => _navigateToDetails(),
-                            ),
-                          ),
-                        ],
-                      ),
+  children: [
+    Expanded(
+      child: _buildSecondaryButton(
+        icon: Icons.history,
+        label: 'Histórico',
+        onPressed: () => _navigateToHistorical(),  // Quitamos la validación
+      ),
+    ),
+    SizedBox(width: 16),
+    Expanded(
+      child: _buildSecondaryButton(
+        icon: Icons.info_outline,
+        label: 'Detalles',
+        onPressed: () => _navigateToDetails(),
+      ),
+    ),
+  ],
+),
                     ],
                   ),
                 ),
@@ -398,16 +396,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToHistorical() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => HistoricalRatesScreen(
-          baseCurrency: _fromCurrency!,
-          targetCurrency: _toCurrency!,
-        ),
+  Navigator.push(
+    context,
+    MaterialPageRoute(
+      builder: (context) => HistoricalRatesScreen(
+        baseCurrency: _fromCurrency ?? 'USD',  // Valor por defecto si no hay selección
+        targetCurrency: _toCurrency ?? 'EUR',   // Valor por defecto si no hay selección
       ),
-    );
-  }
+    ),
+  );
+}
 
   void _navigateToDetails() {
     Navigator.push(
