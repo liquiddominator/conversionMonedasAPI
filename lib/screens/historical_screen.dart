@@ -18,33 +18,23 @@ class HistoricalRatesScreen extends StatefulWidget {
 }
 
 class _HistoricalRatesScreenState extends State<HistoricalRatesScreen> {
-  DateTime selectedDate = DateTime.now().subtract(Duration(days: 1));
-  String selectedBaseCurrency = '';
+  DateTime? selectedDate;
+  String? selectedBaseCurrency;
   List<String> selectedCurrencies = [];
   final TextEditingController _currenciesController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    // Solo inicializamos los valores pero no hacemos peticiones
     selectedBaseCurrency = widget.baseCurrency;
-    selectedCurrencies = [widget.targetCurrency];
     _currenciesController.text = widget.targetCurrency;
-    
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final provider = context.read<CurrencyProvider>();
-      provider.initialize(); // Para cargar las monedas soportadas
-      provider.loadHistoricalRates(
-        selectedBaseCurrency,
-        selectedCurrencies,
-        date: selectedDate,
-      );
-    });
   }
 
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
-      initialDate: selectedDate,
+      initialDate: selectedDate ?? DateTime.now().subtract(Duration(days: 1)),
       firstDate: DateTime(2000),
       lastDate: DateTime.now(),
     );
@@ -52,16 +42,20 @@ class _HistoricalRatesScreenState extends State<HistoricalRatesScreen> {
       setState(() {
         selectedDate = picked;
       });
-      _loadHistoricalData();
+      if (selectedBaseCurrency != null && selectedCurrencies.isNotEmpty) {
+        _loadHistoricalData();
+      }
     }
   }
 
   void _loadHistoricalData() {
-    context.read<CurrencyProvider>().loadHistoricalRates(
-      selectedBaseCurrency,
-      selectedCurrencies,
-      date: selectedDate,
-    );
+    if (selectedDate != null && selectedBaseCurrency != null && selectedCurrencies.isNotEmpty) {
+      context.read<CurrencyProvider>().loadHistoricalRates(
+        selectedBaseCurrency!,
+        selectedCurrencies,
+        date: selectedDate!,
+      );
+    }
   }
 
   @override
@@ -94,7 +88,9 @@ class _HistoricalRatesScreenState extends State<HistoricalRatesScreen> {
                       setState(() {
                         selectedBaseCurrency = newValue;
                       });
-                      _loadHistoricalData();
+                      if (selectedDate != null && selectedCurrencies.isNotEmpty) {
+                        _loadHistoricalData();
+                      }
                     }
                   },
                 ),
@@ -117,7 +113,9 @@ class _HistoricalRatesScreenState extends State<HistoricalRatesScreen> {
                         setState(() {
                           selectedCurrencies = currencies;
                         });
-                        _loadHistoricalData();
+                        if (selectedDate != null && selectedBaseCurrency != null) {
+                          _loadHistoricalData();
+                        }
                       },
                     ),
                   ),
@@ -129,10 +127,21 @@ class _HistoricalRatesScreenState extends State<HistoricalRatesScreen> {
                     leading: Icon(Icons.calendar_today),
                     title: Text('Fecha'),
                     subtitle: Text(
-                      '${selectedDate.day}/${selectedDate.month}/${selectedDate.year}'
+                      selectedDate != null 
+                        ? '${selectedDate!.day}/${selectedDate!.month}/${selectedDate!.year}'
+                        : 'Seleccione una fecha'
                     ),
                     onTap: () => _selectDate(context),
                   ),
+                ),
+                SizedBox(height: 20),
+                ElevatedButton(
+                  onPressed: (selectedDate != null && 
+                            selectedBaseCurrency != null && 
+                            selectedCurrencies.isNotEmpty)
+                      ? _loadHistoricalData
+                      : null,
+                  child: Text('Buscar Datos Históricos'),
                 ),
                 SizedBox(height: 20),
                 if (provider.isLoadingHistorical)

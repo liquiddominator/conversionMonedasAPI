@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:monedas_api_project/models/currency_detail.dart';
 import 'package:monedas_api_project/models/historial_rate.dart';
 
 class CurrencyService {
@@ -102,6 +103,32 @@ class CurrencyService {
     return rates;
   } else {
     throw Exception('Failed to load historical rates: ${response.body}');
+  }
+}
+
+Future<Map<String, CurrencyDetail>> getCurrencyDetails(List<String> currencies) async {
+  final currenciesStr = currencies.join(',');
+  final response = await http.get(
+    Uri.parse('$baseUrl/currencies?apikey=$apiKey&currencies=$currenciesStr'),
+    headers: {
+      'apikey': apiKey,
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final data = json.decode(response.body);
+    Map<String, CurrencyDetail> currencyDetails = {};
+    
+    if (data['data'] != null) {
+      final currencyData = data['data'] as Map<String, dynamic>;
+      currencyData.forEach((key, value) {
+        currencyDetails[key] = CurrencyDetail.fromJson(value);
+      });
+    }
+    
+    return currencyDetails;
+  } else {
+    throw Exception('Failed to load currency details: ${response.body}');
   }
 }
 }

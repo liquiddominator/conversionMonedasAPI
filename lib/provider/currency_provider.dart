@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:monedas_api_project/models/currency_detail.dart';
 import 'package:monedas_api_project/models/historial_rate.dart';
 import 'package:monedas_api_project/services/currency_services.dart';
 
@@ -82,6 +83,28 @@ class CurrencyProvider with ChangeNotifier {
   }
 
   _isLoadingHistorical = false;
+  notifyListeners();
+}
+
+Map<String, CurrencyDetail> _currencyDetails = {};
+bool _isLoadingDetails = false;
+
+Map<String, CurrencyDetail> get currencyDetails => _currencyDetails;
+bool get isLoadingDetails => _isLoadingDetails;
+
+Future<void> loadCurrencyDetails(List<String> currencies) async {
+  _isLoadingDetails = true;
+  _error = '';
+  notifyListeners();
+
+  try {
+    _currencyDetails = await _service.getCurrencyDetails(currencies);
+  } catch (e) {
+    _error = e.toString();
+    print('Error loading currency details: $e');
+  }
+
+  _isLoadingDetails = false;
   notifyListeners();
 }
 
